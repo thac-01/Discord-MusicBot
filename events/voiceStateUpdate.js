@@ -68,15 +68,46 @@ module.exports = async (client, oldState, newState) => {
       }
       break;
     case "LEAVE":
-      if (stateChange.members.size === 0 && !player.paused && player.playing) {
-        player.pause(true);
+      if (client.config.alwaysplay === false && !player.twentyFourSeven) {
+        if (stateChange.members.size === 0 && !player.paused && player.playing) {
+          player.pause(true);
 
-        let emb = new MessageEmbed()
-          .setAuthor(`Paused!`, client.botconfig.IconURL)
-          .setColor(client.botconfig.EmbedColor)
-          .setDescription(`The player has been paused because everybody left`);
-        await client.channels.cache.get(player.textChannel).send(emb);
+          let emb = new MessageEmbed()
+            .setAuthor(`Paused!`, client.botconfig.IconURL)
+            .setColor(client.botconfig.EmbedColor)
+            .setDescription(`The player has been paused because everybody left`);
+          await client.channels.cache.get(player.textChannel).send(emb);
+        }
       }
       break;
+  }
+
+if (!player.twentyFourSeven) {
+  // if nobody left the channel in question, return.
+  if (stateChange.members.size === 1 && player.paused)
+    return;
+
+  // otherwise, check how many people are in the channel now
+  if (stateChange.members.size === 0 &&
+          player.paused &&
+          !player.playing) 
+    setTimeout(() => { // if 1 (you), wait five minutes
+      if (stateChange.members.size === 0 &&
+          player.paused &&
+          !player.playing) {// if there's still 1 member, 
+         let DisconnectedEmbed = client
+            .Embed()
+            .setAuthor({
+              name: "📤┋ **Disconnected!**",
+          })
+            .setDescription(
+              `I was alone for 3 minutes and went to get a tea.`
+            );
+          client.channels.cache
+            .get(player.textChannel)
+            .send({ embeds: [DisconnectedEmbed] });          
+          player.destroy();; // leave
+        }
+     }, 180000); // (5 min in ms)
   }
 };
